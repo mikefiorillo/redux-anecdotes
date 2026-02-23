@@ -1,13 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit'
 import anecdoteService from '../services/anecdotes'
+import { createNotification } from './notificationReducer'
 
-const getId = () => (100000 * Math.random()).toFixed(0)
-
-const asObject = (anecdote) => {
+const asObject = ({ id, content, votes }) => {
   return {
-    content: anecdote,
-    id: getId(),
-    votes: 0,
+    content,
+    id,
+    votes,
   }
 }
 
@@ -17,8 +16,7 @@ const anecdoteSlice = createSlice({
   name: 'anecdote',
   initialState,
   reducers: {
-    create: (state, action) => {
-      console.log(action)
+    createAnecdote: (state, action) => {
       return [...state, asObject(action.payload)]
     },
     createVote: (state, action) => {
@@ -43,5 +41,17 @@ export const initializeAnecdotes = () => {
   }
 }
 
-export const { create, createVote } = anecdoteSlice.actions
+export const addAnecdote = (content) => {
+  return async (dispatch) => {
+    const response = await anecdoteService.create(content)
+    console.log(response)
+    const { id, votes } = response
+    if (!response) return 'error'
+    dispatch(createAnecdote({ content, id, votes }))
+    dispatch(createNotification(`You created '${content}'`))
+    setTimeout(() => dispatch(createNotification('')), 5000)
+  }
+}
+
+export const { createAnecdote, createVote } = anecdoteSlice.actions
 export default anecdoteSlice.reducer
